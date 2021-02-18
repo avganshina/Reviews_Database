@@ -1,54 +1,102 @@
-<?xml version="1.0" encoding="UTF-8"?><sqlb_project><db path="C:/Users/nvg-1/Desktop/movies.sqlite3" readonly="0" foreign_keys="1" case_sensitive_like="0" temp_store="0" wal_autocheckpoint="1000" synchronous="2"/><attached/><window><main_tabs open="structure browser pragmas query" current="3"/></window><tab_structure><column_width id="0" width="300"/><column_width id="1" width="0"/><column_width id="2" width="125"/><column_width id="3" width="905"/><column_width id="4" width="0"/><expanded_item id="0" parent="1"/><expanded_item id="1" parent="1"/><expanded_item id="2" parent="1"/><expanded_item id="3" parent="1"/></tab_structure><tab_browse><current_table name="4,5:mainMovie"/><default_encoding codec=""/><browse_table_settings><table schema="main" name="Movie" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_"><sort/><column_widths><column index="1" value="52"/><column index="2" value="177"/><column index="3" value="52"/><column index="4" value="130"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table></browse_table_settings></tab_browse><tab_sql><sql name="Q1">SELECT title
-FROM Movie
-WHERE director = 'Steven Spielberg'</sql><sql name="Q2">SELECT year
-FROM Movie m, Rating r
-WHERE m.mID = r.mID
-AND r.stars &gt;= 4
-ORDER BY year</sql><sql name="Q3">SELECT title
-FROM Movie
-EXCEPT
-SELECT title FROM Movie, Rating 
-WHERE Movie.mID = Rating.mID
-</sql><sql name="Q4">SELECT name
-FROM Reviewer re left outer join Rating ra
-on re.rID = ra.rID
-WHERE ra.ratingDate is NULL
-</sql><sql name="Q5">SELECT name, title, stars, ratingDate
-FROM Reviewer re, Movie m, Rating ra
-WHERE re.rID = ra.rID
-AND m.mID = ra.mID
-ORDER BY name, title, stars
-</sql><sql name="Q6">SELECT DISTINCT name, title
-FROM Reviewer, Movie, Rating R1, Rating R2
-WHERE Movie.mID = R1.mID
-AND R1.rID = Reviewer.rID
-AND Movie.mID = R2.mID
-AND R2.rID = Reviewer.rID
-AND R1.ratingDate &lt; R2.ratingDate
-AND R1.stars &lt; R2.stars
-</sql><sql name="Q7">SELECT title, max(stars)
-FROM  Movie, Rating 
-WHERE Movie.mID = Rating.mID
-GROUP BY title
-
-</sql><sql name="Q8">SELECT title, max(stars) - min(stars) as spread
-FROM  Movie, Rating 
-WHERE Movie.mID = Rating.mID
-GROUP BY title
-ORDER BY spread desc, title
-
-</sql><sql name="Q9">SELECT avg(avst1) - avg(avst2) 
-FROM
-	(SELECT title, avg(stars) AS avst1
-	FROM movie m, rating r
-	WHERE m.mid = r.mid 
-	AND year &lt; 1980
-	GROUP BY m.mid)
-JOIN
-	(SELECT title, avg(stars) AS avst2
-	FROM movie m, rating r
-	WHERE m.mid = r.mid 
-	AND year &gt; 1980
-	GROUP BY m.mid)
-
-</sql><current_tab id="8"/></tab_sql></sqlb_project>
+---------------------------------------------------------------
+--Find the titles of all movies directed by Steven Spielberg.--
+---------------------------------------------------------------
+
+SELECT title
+FROM Movie
+WHERE director = 'Steven Spielberg'
+
+---------------------------------------------------------------------------------------------------------
+--Find all years that have a movie that received a rating of 4 or 5, and sort them in increasing order.-- 
+---------------------------------------------------------------------------------------------------------
+
+SELECT year
+FROM Movie m, Rating r
+WHERE m.mID = r.mID
+AND r.stars >= 4
+ORDER BY year
+
+-------------------------------------------------------
+--Find the titles of all movies that have no ratings.-- 
+-------------------------------------------------------
+
+SELECT title
+FROM Movie
+EXCEPT
+SELECT title FROM Movie, Rating 
+WHERE Movie.mID = Rating.mID
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+--Some reviewers didn't provide a date with their rating. Find the names of all reviewers who have ratings with a NULL value for the date.-- 
+--------------------------------------------------------------------------------------------------------------------------------------------
+
+SELECT name
+FROM Reviewer re left outer join Rating ra
+on re.rID = ra.rID
+WHERE ra.ratingDate is NULL
+
+------------------------------------------------------------------------------------------------------------------------
+-- Write a query to return the ratings data in a more readable format: reviewer name, movie title, stars, and ratingDate. 
+-- Also, sort the data, first by reviewer name, then by movie title, and lastly by number of stars. 
+------------------------------------------------------------------------------------------------------------------------
+
+SELECT name, title, stars, ratingDate
+FROM Reviewer re, Movie m, Rating ra
+WHERE re.rID = ra.rID
+AND m.mID = ra.mID
+ORDER BY name, title, stars
+
+----------------------------------------------------------------------------------------
+--For all cases where the same reviewer rated the same movie twice and gave it a higher 
+--rating the second time, return the reviewer's name and the title of the movie. 
+-----------------------------------------------------------------------------------------
+
+SELECT DISTINCT name, title
+FROM Reviewer, Movie, Rating R1, Rating R2
+WHERE Movie.mID = R1.mID
+AND R1.rID = Reviewer.rID
+AND Movie.mID = R2.mID
+AND R2.rID = Reviewer.rID
+AND R1.ratingDate < R2.ratingDate
+AND R1.stars < R2.stars
+
+---------------------------------------------------------------------------------------------------
+--For each movie that has at least one rating, find the highest number of stars that movie received. 
+--Return the movie title and number of stars. Sort by movie title. 
+----------------------------------------------------------------------------------------------------
+
+SELECT title, max(stars)
+FROM  Movie, Rating 
+WHERE Movie.mID = Rating.mID
+GROUP BY title
+
+---------------------------------------------------------------------------------------------------------------
+--For each movie, return the title and the 'rating spread', that is, the difference between highest and lowest 
+--ratings given to that movie. Sort by rating spread from highest to lowest, then by movie title. 
+---------------------------------------------------------------------------------------------------------------
+
+SELECT title, max(stars) - min(stars) as spread
+FROM  Movie, Rating 
+WHERE Movie.mID = Rating.mID
+GROUP BY title
+ORDER BY spread desc, title
+
+---------------------------------------------------------------------------------------------------------------------
+--Find the difference between the average rating of movies released before 1980 and the average rating of movies 
+--released after 1980. (Make sure to calculate the average rating for each movie, then the average of those averages 
+--for movies before 1980 and movies after. Don't just calculate the overall average rating before and after 1980.) 
+----------------------------------------------------------------------------------------------------------------------
+
+SELECT avg(avst1) - avg(avst2) 
+FROM
+	(SELECT title, avg(stars) AS avst1
+	FROM movie m, rating r
+	WHERE m.mid = r.mid 
+	AND year < 1980
+	GROUP BY m.mid)
+JOIN
+	(SELECT title, avg(stars) AS avst2
+	FROM movie m, rating r
+	WHERE m.mid = r.mid 
+	AND year > 1980
+	GROUP BY m.mid)
